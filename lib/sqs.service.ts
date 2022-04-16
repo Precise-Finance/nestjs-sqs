@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { Consumer } from 'sqs-consumer';
 import { Producer } from 'sqs-producer';
 import { Message, QueueName, SqsConsumerEventHandlerMeta, SqsMessageHandlerMeta, SqsOptions } from './sqs.types';
@@ -6,6 +6,7 @@ import { DiscoveryService } from '@nestjs-plus/discovery';
 import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './sqs.constants';
 import * as AWS from 'aws-sdk';
 import type { QueueAttributeName } from 'aws-sdk/clients/sqs';
+import { AuditContextService } from '@precise/audit';
 
 @Injectable()
 export class SqsService implements OnModuleInit, OnModuleDestroy {
@@ -17,6 +18,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
   public constructor(
     @Inject(SQS_OPTIONS) public readonly options: SqsOptions,
     private readonly discover: DiscoveryService,
+    @Optional() private readonly auditContextService?: AuditContextService,
   ) {}
 
   public async onModuleInit(): Promise<void> {
@@ -47,7 +49,15 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
                 metadata.discoveredMethod.parentClass.instance,
               ),
             }
-          : { handleMessage: metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance) }),
+          : {
+              handleMessage: (message: AWS.SQS.Message) => {
+                // Will create a telemtery context with MessageId as traceId
+                if (metadata.meta.auditContext) {
+                  this.auditContextService.setContextFromData(metadata.meta.auditContext, message);
+                }
+                return metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance);
+              },
+            }),
       });
 
       const eventsMetadata = eventHandlers.filter(({ meta }) => meta.name === name);
