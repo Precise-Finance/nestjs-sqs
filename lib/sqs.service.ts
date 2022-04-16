@@ -12,9 +12,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
   public readonly consumers = new Map<QueueName, Consumer>();
   public readonly producers = new Map<QueueName, Producer>();
 
-  private readonly logger = new Logger('SqsService', {
-    timestamp: false,
-  });
+  private readonly logger = new Logger(SqsService.name);
 
   public constructor(
     @Inject(SQS_OPTIONS) public readonly options: SqsOptions,
@@ -61,6 +59,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
           );
         }
       }
+      consumer.addListener('error', (err, message) => this.logger.error({ ...err, sqsMessage: message }));
       this.consumers.set(name, consumer);
     });
 
