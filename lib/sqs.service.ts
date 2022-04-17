@@ -6,7 +6,6 @@ import { DiscoveryService } from '@nestjs-plus/discovery';
 import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './sqs.constants';
 import * as AWS from 'aws-sdk';
 import type { QueueAttributeName } from 'aws-sdk/clients/sqs';
-import * as api from '@opentelemetry/api';
 import { AuditContext, runWithContext } from '@precise/audit';
 @Injectable()
 export class SqsService implements OnModuleInit, OnModuleDestroy {
@@ -68,7 +67,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
 
                 return runWithContext(
                   auditContext,
-                  metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance),
+                  metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance)(message),
                 );
               },
             }),
