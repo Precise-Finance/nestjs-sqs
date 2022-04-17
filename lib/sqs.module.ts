@@ -3,7 +3,6 @@ import { SqsService } from './sqs.service';
 import { SqsModuleAsyncOptions, SqsModuleOptionsFactory, SqsOptions } from './sqs.types';
 import { SQS_OPTIONS } from './sqs.constants';
 import { DiscoveryModule, DiscoveryService } from '@nestjs-plus/discovery';
-import { AuditContextService } from '@precise/audit';
 
 @Global()
 @Module({
@@ -20,7 +19,7 @@ export class SqsModule {
     const sqsProvider: Provider = {
       provide: SqsService,
       useFactory: (sqsOptions: SqsOptions, discover: DiscoveryService) => new SqsService(options, discover),
-      inject: [SQS_OPTIONS, DiscoveryService, AuditContextService],
+      inject: [SQS_OPTIONS, DiscoveryService],
     };
 
     return {
