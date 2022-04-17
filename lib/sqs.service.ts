@@ -7,7 +7,7 @@ import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './
 import * as AWS from 'aws-sdk';
 import type { QueueAttributeName } from 'aws-sdk/clients/sqs';
 import * as api from '@opentelemetry/api';
-import { AuditContext } from '@precise/audit';
+import { AuditContext, runWithContext } from '@precise/audit';
 @Injectable()
 export class SqsService implements OnModuleInit, OnModuleDestroy {
   public readonly consumers = new Map<QueueName, Consumer>();
@@ -51,29 +51,25 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
           : {
               handleMessage: (message: AWS.SQS.Message) => {
                 // Will create a telemtery context with MessageId as traceId
-                let sqsCtx = api.context.active();
+                let auditContext = {};
 
                 if (metadata.meta.auditContext) {
                   const attrs = message.MessageAttributes;
                   const traceId = message.MessageId;
 
-                  const key = api.createContextKey('auditContext');
-
-                  sqsCtx = sqsCtx.setValue(
-                    key,
-                    new AuditContext({
-                      ...metadata.meta.auditContext,
-                      traceId,
-                      userAgent: attrs?.userAgent?.StringValue as string,
-                      ip: attrs?.id?.StringValue as string,
-                      host: attrs?.host?.StringValue as string,
-                    }),
-                  );
+                  auditContext = new AuditContext({
+                    ...metadata.meta.auditContext,
+                    traceId,
+                    userAgent: attrs?.userAgent?.StringValue as string,
+                    ip: attrs?.id?.StringValue as string,
+                    host: attrs?.host?.StringValue as string,
+                  });
                 }
 
-                return api.context.with(sqsCtx, () => {
-                  return metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance);
-                });
+                return runWithContext(
+                  auditContext,
+                  metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance),
+                );
               },
             }),
       });
