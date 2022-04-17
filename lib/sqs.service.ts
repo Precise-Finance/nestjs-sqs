@@ -6,8 +6,8 @@ import { DiscoveryService } from '@nestjs-plus/discovery';
 import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './sqs.constants';
 import * as AWS from 'aws-sdk';
 import type { QueueAttributeName } from 'aws-sdk/clients/sqs';
-import { AuditContextService } from '@precise/audit';
-
+import * as api from '@opentelemetry/api';
+import { AuditContext } from '@precise/audit';
 @Injectable()
 export class SqsService implements OnModuleInit, OnModuleDestroy {
   public readonly consumers = new Map<QueueName, Consumer>();
@@ -18,7 +18,6 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
   public constructor(
     @Inject(SQS_OPTIONS) public readonly options: SqsOptions,
     private readonly discover: DiscoveryService,
-    @Optional() private readonly auditContextService?: AuditContextService,
   ) {}
 
   public async onModuleInit(): Promise<void> {
@@ -52,10 +51,29 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
           : {
               handleMessage: (message: AWS.SQS.Message) => {
                 // Will create a telemtery context with MessageId as traceId
+                let sqsCtx = api.context.active();
+
                 if (metadata.meta.auditContext) {
-                  this.auditContextService.setContextFromData(metadata.meta.auditContext, message);
+                  const attrs = message.MessageAttributes;
+                  const traceId = message.MessageId;
+
+                  const key = api.createContextKey('auditContext');
+
+                  sqsCtx = sqsCtx.setValue(
+                    key,
+                    new AuditContext({
+                      ...metadata.meta.auditContext,
+                      traceId,
+                      userAgent: attrs?.userAgent?.StringValue as string,
+                      ip: attrs?.id?.StringValue as string,
+                      host: attrs?.host?.StringValue as string,
+                    }),
+                  );
                 }
-                return metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance);
+
+                return api.context.with(sqsCtx, () => {
+                  return metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance);
+                });
               },
             }),
       });

@@ -19,8 +19,7 @@ export class SqsModule {
     };
     const sqsProvider: Provider = {
       provide: SqsService,
-      useFactory: (sqsOptions: SqsOptions, discover: DiscoveryService, auditContextService: AuditContextService) =>
-        new SqsService(options, discover, auditContextService),
+      useFactory: (sqsOptions: SqsOptions, discover: DiscoveryService) => new SqsService(options, discover),
       inject: [SQS_OPTIONS, DiscoveryService, AuditContextService],
     };
 
@@ -37,8 +36,7 @@ export class SqsModule {
     const asyncProviders = this.createAsyncProviders(options);
     const sqsProvider: Provider = {
       provide: SqsService,
-      useFactory: (options: SqsOptions, discover: DiscoveryService, auditContextService: AuditContextService) =>
-        new SqsService(options, discover, auditContextService),
+      useFactory: (options: SqsOptions, discover: DiscoveryService) => new SqsService(options, discover),
       inject: [SQS_OPTIONS, DiscoveryService],
     };
 
