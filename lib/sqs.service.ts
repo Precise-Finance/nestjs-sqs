@@ -67,7 +67,10 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
 
                 return runWithContext(
                   auditContext,
-                  metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance)(message),
+                  async () =>
+                    await metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance)(
+                      message,
+                    ),
                 );
               },
             }),
