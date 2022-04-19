@@ -7,6 +7,7 @@ import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './
 import * as AWS from 'aws-sdk';
 import type { QueueAttributeName } from 'aws-sdk/clients/sqs';
 import { AuditContext, runWithContext } from '@precise/audit';
+
 @Injectable()
 export class SqsService implements OnModuleInit, OnModuleDestroy {
   public readonly consumers = new Map<QueueName, Consumer>();
@@ -54,11 +55,9 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
 
                 if (metadata.meta.auditContext) {
                   const attrs = message.MessageAttributes;
-                  const traceId = message.MessageId;
 
                   auditContext = new AuditContext({
                     ...metadata.meta.auditContext,
-                    traceId,
                     userAgent: attrs?.userAgent?.StringValue as string,
                     ip: attrs?.id?.StringValue as string,
                     host: attrs?.host?.StringValue as string,
