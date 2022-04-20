@@ -49,7 +49,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
               ),
             }
           : {
-              handleMessage: (message: AWS.SQS.Message) => {
+              handleMessage: async (message: AWS.SQS.Message) => {
                 // Will create a telemtery context with MessageId as traceId
                 let auditContext = {};
 
@@ -64,7 +64,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
                   });
                 }
 
-                return runWithContext(
+                return await runWithContext(
                   auditContext,
                   async () =>
                     await metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance)(
