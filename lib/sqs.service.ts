@@ -59,8 +59,9 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
                   auditContext = new AuditContext({
                     ...metadata.meta.auditContext,
                     userAgent: attrs?.userAgent?.StringValue as string,
-                    ip: attrs?.id?.StringValue as string,
+                    ip: attrs?.ip?.StringValue as string,
                     host: attrs?.host?.StringValue as string,
+                    path: metadata.discoveredMethod.methodName,
                   });
                 }
 
