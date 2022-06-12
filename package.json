@@ -1,6 +1,6 @@
 {
   "name": "@precise/nestjs-sqs",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -55,6 +55,6 @@
   "peerDependencies": {
     "@nestjs/common": "^6.10.11 || ^7.0.0 || ^8.0.0",
     "@nestjs/core": "^6.10.11 || ^7.0.0 || ^8.0.0",
-    "@precise/nestjs-utils": "3.7.1"
+    "@precise/nestjs-utils": "^3.7.1"
   }
 }
