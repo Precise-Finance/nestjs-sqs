@@ -40,53 +40,58 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
       }
 
       const isBatchHandler = metadata.meta.batch === true;
-      const consumer = Consumer.create({
-        ...consumerOptions,
-        ...(isBatchHandler
-          ? {
-              handleMessageBatch: metadata.discoveredMethod.handler.bind(
-                metadata.discoveredMethod.parentClass.instance,
-              ),
-            }
-          : {
-              handleMessage: async (message: AWS.SQS.Message) => {
-                // Will create a telemtery context with MessageId as traceId
-                let auditContext = {};
+      for (let i = 0; i < metadata.meta.instances; i++) {
+        const consumerName =  i == 0 ? metadata.meta.name : `${metadata.meta.name}_${i}`;
+        const consumer = Consumer.create({
+          ...consumerOptions,
+          ...(isBatchHandler
+            ? {
+                handleMessageBatch: metadata.discoveredMethod.handler.bind(
+                  metadata.discoveredMethod.parentClass.instance,
+                ),
+              }
+            : {
+                handleMessage: async (message: AWS.SQS.Message) => {
+                  // Will create a telemtery context with MessageId as traceId
+                  let auditContext = {};
 
-                if (metadata.meta.auditContext) {
-                  const attrs = message.MessageAttributes;
+                  if (metadata.meta.auditContext) {
+                    const attrs = message.MessageAttributes;
 
-                  auditContext = new AuditContext({
-                    ...metadata.meta.auditContext,
-                    userAgent: attrs?.userAgent?.StringValue as string,
-                    ip: attrs?.ip?.StringValue as string,
-                    host: attrs?.host?.StringValue as string,
-                    path: metadata.discoveredMethod.methodName,
-                  });
-                }
+                    auditContext = new AuditContext({
+                      ...metadata.meta.auditContext,
+                      userAgent: attrs?.userAgent?.StringValue as string,
+                      ip: attrs?.ip?.StringValue as string,
+                      host: attrs?.host?.StringValue as string,
+                      path: metadata.discoveredMethod.methodName,
+                    });
+                  }
 
-                return await runWithContext(
-                  auditContext,
-                  async () =>
-                    await metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance)(
-                      message,
-                    ),
-                );
-              },
-            }),
-      });
+                  return await runWithContext(
+                    auditContext,
+                    async () =>
+                      await metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance)(
+                        message,
+                      ),
+                  );
+                },
+              }),
+        });
 
-      const eventsMetadata = eventHandlers.filter(({ meta }) => meta.name === name);
-      for (const eventMetadata of eventsMetadata) {
-        if (eventMetadata) {
-          consumer.addListener(
-            eventMetadata.meta.eventName,
-            eventMetadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance),
-          );
+        // Same event handler for all instances
+        const eventsMetadata = eventHandlers.filter(({ meta }) => meta.name === name);
+        for (const eventMetadata of eventsMetadata) {
+          if (eventMetadata) {
+            consumer.addListener(
+              eventMetadata.meta.eventName,
+              eventMetadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance),
+            );
+          }
         }
+        consumer.addListener('error', (err, message) => this.logger.error({ ...err, sqsMessage: message }));
+        this.consumers.set(consumerName, consumer);
+
       }
-      consumer.addListener('error', (err, message) => this.logger.error({ ...err, sqsMessage: message }));
-      this.consumers.set(name, consumer);
     });
 
     this.options.producers?.forEach((options) => {

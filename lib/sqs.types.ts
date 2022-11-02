@@ -44,6 +44,7 @@ export interface SqsMessageHandlerMeta {
   name: string;
   batch?: boolean;
   auditContext?: Partial<AuditContext>;
+  instances: number;
 }
 
 export interface SqsConsumerEventHandlerMeta {
