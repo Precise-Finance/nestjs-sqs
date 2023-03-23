@@ -21,8 +21,6 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   public async onModuleInit(): Promise<void> {
-    this.logger = this.options.logger ?? new Logger('SqsService', { timestamp: false });
-
     const messageHandlers = await this.discover.providerMethodsWithMetaAtKey<SqsMessageHandlerMeta>(
       SQS_CONSUMER_METHOD,
     );

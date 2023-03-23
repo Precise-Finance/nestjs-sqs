@@ -1,6 +1,6 @@
 {
   "name": "@precise/nestjs-sqs",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -42,8 +42,6 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.5.5",
-    "sqs-consumer": "^7.0.3",
-    "sqs-producer": "^3.1.1",
     "ts-jest": "^27.0.5",
     "ts-node": "^10.2.1",
     "tsconfig-paths": "^3.9.0",
@@ -54,6 +52,8 @@
     "@nestjs/common": "^6.10.11 || ^7.0.0 || ^8.0.0 || ^9.0.0",
     "@nestjs/core": "^6.10.11 || ^7.0.0 || ^8.0.0 || ^9.0.0",
     "@nestjs/testing": "^8.2.6 || ^9.0.0",
-    "@precise/nestjs-utils": "^4.0.0"
+    "@precise/nestjs-utils": "^4.0.0",
+    "sqs-consumer": "^7.0.3",
+    "sqs-producer": "^3.1.1"
   }
 }
