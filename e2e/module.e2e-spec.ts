@@ -3,9 +3,9 @@ import { SqsModule, SqsService } from '../lib';
 import { SqsConsumerOptions, SqsProducerOptions } from '../lib/sqs.types';
 import { Injectable } from '@nestjs/common';
 import { SqsConsumerEventHandler, SqsMessageHandler } from '../lib/sqs.decorators';
-import * as AWS from 'aws-sdk';
 import { promisify } from 'util';
 import waitForExpect from 'wait-for-expect';
+import { Message, SQSClient } from '@aws-sdk/client-sqs';
 
 const delay = promisify(setTimeout);
 const SQS_ENDPOINT = process.env.SQS_ENDPOINT || 'http://localhost:9324';
@@ -15,9 +15,12 @@ enum TestQueue {
   DLQ = 'test-dead',
 }
 
-const sqs = new AWS.SQS({
+const sqs = new SQSClient({
   apiVersion: '2012-11-05',
-  credentials: new AWS.Credentials('x', 'x'),
+  credentials: {
+    accessKeyId: 'x',
+    secretAccessKey: 'x',
+  },
   region: 'none',
 });
 
@@ -37,6 +40,7 @@ const TestQueues: { [key in TestQueue]: SqsConsumerOptions | SqsProducerOptions 
 describe('SqsModule', () => {
   let module: TestingModule;
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   describe.skip('register', () => {});
 
   describe('registerAsync', () => {
@@ -78,17 +82,17 @@ describe('SqsModule', () => {
 
       @SqsMessageHandler(TestQueue.Test)
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      public async handleTestMessage(message: AWS.SQS.Message) {
+      public async handleTestMessage(message: Message) {
         fakeProcessor(message);
       }
 
       @SqsConsumerEventHandler(TestQueue.Test, 'processing_error')
-      public handleErrorEvent(err: Error, message: AWS.SQS.Message) {
+      public handleErrorEvent(err: Error, message: Message) {
         fakeErrorEventHandler(err, message);
       }
 
       @SqsMessageHandler(TestQueue.DLQ)
-      public async handleDLQMessage(message: AWS.SQS.Message) {
+      public async handleDLQMessage(message: Message) {
         fakeDLQProcessor(message);
       }
     }

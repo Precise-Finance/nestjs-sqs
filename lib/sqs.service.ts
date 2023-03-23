@@ -1,11 +1,11 @@
 import { Inject, Injectable, Logger, LoggerService, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Consumer } from 'sqs-consumer';
 import { Producer } from 'sqs-producer';
-import { Message, QueueName, SqsConsumerEventHandlerMeta, SqsMessageHandlerMeta, SqsOptions } from './sqs.types';
+import { QueueName, SqsConsumerEventHandlerMeta, SqsMessageHandlerMeta, SqsOptions, Message as SNSMessage } from './sqs.types';
 import { DiscoveryService } from '@nestjs-plus/discovery';
 import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './sqs.constants';
-import * as AWS from 'aws-sdk';
 import type { QueueAttributeName } from 'aws-sdk/clients/sqs';
+import { GetQueueAttributesCommand, Message, PurgeQueueCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { AuditContext, runWithContext } from '@precise/audit';
 
 @Injectable()
@@ -43,7 +43,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
 
       const isBatchHandler = metadata.meta.batch === true;
       for (let i = 0; i < metadata.meta.instances; i++) {
-        const consumerName =  i == 0 ? metadata.meta.name : `${metadata.meta.name}_${i}`;
+        const consumerName = i == 0 ? metadata.meta.name : `${metadata.meta.name}_${i}`;
         const consumer = Consumer.create({
           ...consumerOptions,
           ...(isBatchHandler
@@ -53,8 +53,8 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
                 ),
               }
             : {
-                handleMessage: async (message: AWS.SQS.Message) => {
-                  // Will create a telemtery context with MessageId as traceId
+                handleMessage: async (message: Message) => {
+                  // Will create a telemetry context with MessageId as traceId
                   let auditContext = {};
 
                   if (metadata.meta.auditContext) {
@@ -92,7 +92,6 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
         }
         consumer.addListener('error', (err, message) => this.logger.error({ ...err, sqsMessage: message }));
         this.consumers.set(consumerName, consumer);
-
       }
     });
 
@@ -122,8 +121,8 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Consumer/Producer does not exist: ${name}`);
     }
 
-    const { sqs, queueUrl } = (this.consumers.get(name) ?? this.producers.get(name)) as {
-      sqs: AWS.SQS;
+    const { sqs, queueUrl } = (this.consumers.get(name) || this.producers.get(name)) as {
+      sqs: SQSClient;
       queueUrl: string;
     };
     if (!sqs) {
@@ -138,21 +137,19 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
 
   public async purgeQueue(name: QueueName) {
     const { sqs, queueUrl } = this.getQueueInfo(name);
-    return sqs
-      .purgeQueue({
-        QueueUrl: queueUrl,
-      })
-      .promise();
+    const command = new PurgeQueueCommand({
+      QueueUrl: queueUrl,
+    });
+    return await sqs.send(command);
   }
 
   public async getQueueAttributes(name: QueueName) {
     const { sqs, queueUrl } = this.getQueueInfo(name);
-    const response = await sqs
-      .getQueueAttributes({
-        QueueUrl: queueUrl,
-        AttributeNames: ['All'],
-      })
-      .promise();
+    const command = new GetQueueAttributesCommand({
+      QueueUrl: queueUrl,
+      AttributeNames: ['All'],
+    });
+    const response = await sqs.send(command);
     return response.Attributes as { [key in QueueAttributeName]: string };
   }
 
@@ -164,7 +161,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
     return this.producers.get(name).queueSize();
   }
 
-  public send<T = any>(name: QueueName, payload: Message<T> | Message<T>[]) {
+  public send<T = any>(name: QueueName, payload: SNSMessage<T> | SNSMessage<T>[]) {
     if (!this.producers.has(name)) {
       throw new Error(`Producer does not exist: ${name}`);
     }
