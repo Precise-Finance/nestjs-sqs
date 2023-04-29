@@ -1,7 +1,13 @@
 import { Inject, Injectable, Logger, LoggerService, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Consumer } from 'sqs-consumer';
 import { Producer } from 'sqs-producer';
-import { QueueName, SqsConsumerEventHandlerMeta, SqsMessageHandlerMeta, SqsOptions, Message as SNSMessage } from './sqs.types';
+import {
+  QueueName,
+  SqsConsumerEventHandlerMeta,
+  SqsMessageHandlerMeta,
+  SqsOptions,
+  Message as SNSMessage,
+} from './sqs.types';
 import { DiscoveryService } from '@nestjs-plus/discovery';
 import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './sqs.constants';
 import type { QueueAttributeName } from 'aws-sdk/clients/sqs';
