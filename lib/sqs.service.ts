@@ -10,7 +10,7 @@ import {
 } from './sqs.types';
 import { DiscoveryService } from '@nestjs-plus/discovery';
 import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './sqs.constants';
-import type { QueueAttributeName } from 'aws-sdk/clients/sqs';
+import { QueueAttributeName } from '@aws-sdk/client-sqs';
 import { GetQueueAttributesCommand, Message, PurgeQueueCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { AuditContext, runWithContext } from '@precise/audit';
 

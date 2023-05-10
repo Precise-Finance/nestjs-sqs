@@ -1,7 +1,7 @@
 import { applyDecorators, SetMetadata } from '@nestjs/common';
 import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD } from './sqs.constants';
 import { AuditContext } from '@precise/audit';
-import { Span } from '@precise/nestjs-opentelemetry';
+import { Span } from 'nestjs-otel';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const SqsMessageHandler = (name: string, batch?: boolean, auditContext?: Partial<AuditContext>, instances = 1) =>
