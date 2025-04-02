@@ -1,6 +1,6 @@
 {
   "name": "@precise/nestjs-sqs",
-  "version": "2.2.10",
+  "version": "2.2.11",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -44,7 +44,7 @@
     "ts-jest": "^27.0.5",
     "ts-node": "^10.2.1",
     "tsconfig-paths": "^3.9.0",
-    "typescript": "^4.9.5",
+    "typescript": "^4.9.5 || ^5.0.0",
     "wait-for-expect": "^3.0.2"
   },
   "peerDependencies": {
