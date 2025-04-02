@@ -1,6 +1,6 @@
 {
   "name": "@precise/nestjs-sqs",
-  "version": "2.2.11",
+  "version": "2.2.12",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,7 +26,7 @@
   "dependencies": {
     "@aws-sdk/client-sqs": "3.337.0",
     "@nestjs-plus/discovery": "^2.0.2",
-    "nestjs-otel": "^5.1.5",
+    "nestjs-otel": "6.1.2",
     "sqs-consumer": "7.1.0",
     "sqs-producer": "3.1.1"
   },
@@ -52,7 +52,7 @@
     "@nestjs/common": "^6.10.11 || ^7.0.0 || ^8.0.0 || ^9.0.0",
     "@nestjs/core": "^6.10.11 || ^7.0.0 || ^8.0.0 || ^9.0.0",
     "@nestjs/testing": "^8.2.6 || ^9.0.0",
-    "@precise/audit": "^1.0.0",
+    "@precise/audit": "^1.0.0 || ^1.4.0",
     "rxjs": "^7.8.1"
   }
 }
